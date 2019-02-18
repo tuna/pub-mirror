@@ -8,7 +8,9 @@ environment:
   sdk: '>=2.1.0 <3.0.0'
 
 dependencies:
-  pub_client: ^3.0.2
+  # pub_client: ^3.0.2
+  pub_client:
+    git: git://github.com/huiyiqun/pub_client.git
   executor: ^2.1.2
 
 dev_dependencies:
