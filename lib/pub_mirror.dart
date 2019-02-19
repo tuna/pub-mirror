@@ -17,7 +17,7 @@ dynamic SerializeToJson(dynamic object) {
 
   if (object is Map) {
     object = Map<String, dynamic>.fromIterable(
-        object.entries,
+        object.entries.where((entry) => entry.value != null),
         key: (entry) => SerializeToJson(entry.key),
         value: (entry) => SerializeToJson(entry.value));
   }
