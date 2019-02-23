@@ -1,78 +1,18 @@
-import "dart:io";
-import "dart:convert";
-import "dart:mirrors";
-import "dart:async";
-import "package:http/http.dart";
+import "dart:io" as io;
+import "package:http/http.dart" as http;
 import "package:pub_client/pub_client.dart";
 
-class StatusCodeException implements Exception {
-  final String url;
-  final int statusCode;
-  final String reason;
-
-  StatusCodeException({
-    this.url = 'some page',
-    this.statusCode = null,
-    this.reason = null,
-  });
-
-  @override
-  String toString() {
-    var buffer = StringBuffer('failed');
-    if (statusCode != null) {
-      buffer.write(' with ${statusCode}');
-    }
-    buffer.write(' when visiting ${url}');
-    if (reason != null) {
-      buffer.write(': ${reason}');
-    }
-    return buffer.toString();
-  }
-}
+import "./http.dart";
+import "./json.dart";
 
 class PubMirrorTool {
   final String upstream, destination, serving_url;
-  final _http_client = HttpClient();
+  final _http_client = io.HttpClient();
   PubClient _pub_client;
 
   PubMirrorTool(this.upstream, this.destination, this.serving_url) {
     _pub_client = PubClient(
-        client: IOClient(_http_client), baseApiUrl: this.upstream);
-  }
-
-  dynamic SerializeToJson(dynamic object) {
-    var toJsonMethod = reflect(object).type.instanceMembers[Symbol("toJson")];
-    if (toJsonMethod != null && toJsonMethod.isRegularMethod) {
-      object = object.toJson();
-    }
-
-    if (object is List) {
-      object = object.map(SerializeToJson).toList();
-    }
-
-    if (object is Map) {
-      object = Map<String, dynamic>.fromIterable(
-          object.entries.where((entry) => entry.value != null),
-          key: (entry) => SerializeToJson(entry.key),
-          value: (entry) => SerializeToJson(entry.value));
-    }
-
-    return object;
-  }
-
-  Future saveFileTo(String url, String path) async {
-    var request = await _http_client.getUrl(Uri.parse(url));
-    var response = await request.close();
-    if (response.statusCode >= 400) {
-      await response.drain();
-      throw StatusCodeException(
-        reason: response.reasonPhrase,
-        url: url,
-        statusCode: response.statusCode,
-      );
-    }
-    // TODO: progress bar
-    response.pipe(File(path).openWrite());
+        client: http.IOClient(_http_client), baseApiUrl: this.upstream);
   }
 
   Stream<Package> listAllPackages() async* {
