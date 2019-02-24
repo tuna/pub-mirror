@@ -1,6 +1,5 @@
 import "dart:io" as io;
 import "dart:convert" as convert;
-import "package:http/http.dart" as http;
 import "package:path/path.dart" as path;
 import 'package:executor/executor.dart' as executor;
 import "package:pub_client/pub_client.dart";

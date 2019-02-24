@@ -13,6 +13,7 @@ dependencies:
     git: git://github.com/huiyiqun/pub_client.git
   executor: ^2.1.2
   path: ^1.6.2
+  args: ^1.5.1
 
 dev_dependencies:
   pedantic: ^1.0.0
