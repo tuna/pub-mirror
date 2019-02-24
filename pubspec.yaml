@@ -14,6 +14,7 @@ dependencies:
   executor: ^2.1.2
   path: ^1.6.2
   args: ^1.5.1
+  http: ^0.12.0+1
 
 dev_dependencies:
   pedantic: ^1.0.0
