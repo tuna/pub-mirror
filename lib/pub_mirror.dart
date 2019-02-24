@@ -38,11 +38,19 @@ class PubMirrorTool {
 
   Future downloadPackage(String name) async {
     final full_package = await _pub_client.getPackage(name);
+    final package_api_path = path.join(api_path, 'packages', name);
     // TODO: call
     for (var version in full_package.versions) {
-      if (verbose) {
-        print('--> Downloading ${name}@${version.version}');
+      final version_api_path =
+          path.join(package_api_path, 'versions', version.version);
+      final version_meta_path = path.join(version_api_path, meta_filename);
+      final version_meta_file = io.File(version_meta_path);
+      if (version_meta_file.existsSync() &&
+          version_meta_file.statSync().type == io.FileSystemEntityType.file) {
+        print('--> Skip ${name}@${version.version}');
+        continue;
       }
+      print('--> Downloading ${name}@${version.version}');
       final filename = path.basename(version.archive_url);
       assert(filename.endsWith(archive_extension),
           'Unexpected archive filename found: ${filename}');
@@ -55,30 +63,23 @@ class PubMirrorTool {
       if (version.version == full_package.latest.version) {
         full_package.latest.archive_url = version.archive_url;
       }
-      await saveVersionInfo(
-          version,
-          path.join(api_path, 'packages', name, 'versions', version.version,
-              meta_filename));
+      await dumpJsonSafely(
+          version, path.join(version_api_path, meta_filename));
     }
-    await savePackageInfo(
-        full_package, path.join(api_path, 'packages', name, meta_filename));
+    await dumpJsonSafely(
+        full_package, path.join(package_api_path, meta_filename));
   }
 
-  Future savePackageInfo(FullPackage pkg, String destination) async {
+  Future dumpJsonSafely(dynamic object, String destination) async {
     if (verbose) {
       print('==> saving ${destination}');
     }
+    // Assume that moving file in same directory is atomic
     await ensureDirectoryCreated(destination);
-    final content = convert.json.encode(SerializeToJson(pkg));
-    await io.File(destination).writeAsString(content);
-  }
-
-  Future saveVersionInfo(Version ver, String destination) async {
-    if (verbose) {
-      print('==> saving ${destination}');
-    }
-    await ensureDirectoryCreated(destination);
-    final content = convert.json.encode(SerializeToJson(ver));
+    final dirname = path.dirname(destination);
+    final basename = path.basename(destination);
+    final tmp_file = path.join(dirname, '.${basename}.tmp');
+    final content = convert.json.encode(SerializeToJson(object));
     await io.File(destination).writeAsString(content);
   }
 
