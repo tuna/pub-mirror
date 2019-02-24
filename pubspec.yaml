@@ -1,6 +1,6 @@
 name: pub_mirror
 description: A sample command-line application.
-version: 0.1.5
+version: 0.1.6
 homepage: https://github.com/huiyiqun/pub-mirror
 author: Hui Yiqun <i@huiyiqun.me>
 
@@ -15,10 +15,10 @@ dependencies:
   path: ^1.6.2
   args: ^1.5.1
   http: ^0.11.3+17
-  pedantic: ^1.5.0
+  pedantic: ^1.4.0
 
 dev_dependencies:
-  pedantic: ^1.5.0
+  pedantic: ^1.4.0
 
 executables:
   pub_mirror:
