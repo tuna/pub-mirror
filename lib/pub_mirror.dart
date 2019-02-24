@@ -50,6 +50,11 @@ class PubMirrorTool {
           version.archive_url,
           path.join(archive_path, 'packages', name, 'versions',
               version.version + archive_extension));
+      version.archive_url = path.url.join(serving_url, 'packages', name,
+          'versions', version.version + archive_extension);
+      if (version.version == full_package.latest.version) {
+        full_package.latest.archive_url = version.archive_url;
+      }
       await saveVersionInfo(
           version,
           path.join(api_path, 'packages', name, 'versions', version.version,
