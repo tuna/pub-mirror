@@ -9,11 +9,16 @@ ArgResults parseArgs(List<String> arguments) {
         abbr: 'v', negatable: false, help: 'more verbose output')
     ..addOption('upstream',
         abbr: 'u',
-        help: 'set the upstream to mirror from',
-        defaultsTo: 'https://pub.dartlang.org/api',
-        valueHelp: 'UPSTREAM');
+        help: 'the upstream to mirror from',
+        defaultsTo: 'https://pub.dartlang.org/api')
+    ..addOption('concurrency',
+        abbr: 'p',
+        help: 'max number of packages to download in parallel',
+        defaultsTo: '1');
   var result = parser.parse(arguments);
-  if (result['help'] || result.rest.length != 2) {
+  if (result['help'] ||
+      int.tryParse(result['concurrency']) == null ||
+      result.rest.length != 2) {
     print("""Usage:
 pub_mirror [options] <dest-path> <serving-url>
 
@@ -30,5 +35,5 @@ main(List<String> arguments) async {
   var args = parseArgs(arguments);
   await pub_mirror.PubMirrorTool(args['upstream'], args.rest[0], args.rest[1],
           verbose: args['verbose'])
-      .download();
+      .download(int.parse(args['concurrency']));
 }

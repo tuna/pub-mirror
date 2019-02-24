@@ -2,6 +2,7 @@ import "dart:io" as io;
 import "dart:convert" as convert;
 import "package:http/http.dart" as http;
 import "package:path/path.dart" as path;
+import 'package:executor/executor.dart' as executor;
 import "package:pub_client/pub_client.dart";
 
 import "./http.dart";
@@ -63,8 +64,7 @@ class PubMirrorTool {
       if (version.version == full_package.latest.version) {
         full_package.latest.archive_url = version.archive_url;
       }
-      await dumpJsonSafely(
-          version, path.join(version_api_path, meta_filename));
+      await dumpJsonSafely(version, path.join(version_api_path, meta_filename));
     }
     await dumpJsonSafely(
         full_package, path.join(package_api_path, meta_filename));
@@ -95,10 +95,14 @@ class PubMirrorTool {
     await io.Directory(path.dirname(file_path)).create(recursive: true);
   }
 
-  Future download() async {
+  Future download(int concurrency) async {
+    final exe = new executor.Executor(concurrency: concurrency);
     await for (var package in listAllPackages()) {
-      print('Downloading ${package.name}');
-      await downloadPackage(package.name);
+      exe.scheduleTask(() async {
+        print('Downloading ${package.name}');
+        await downloadPackage(package.name);
+      });
     }
+    await exe.join();
   }
 }
