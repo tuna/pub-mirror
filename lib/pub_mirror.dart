@@ -20,7 +20,8 @@ class PubMirrorTool {
   String get archive_path => destination;
 
   PubMirrorTool(this.upstream, this.destination, this.serving_url,
-      {this.verbose = true}) {
+      {this.verbose = true, maxConnections = 10}) {
+    _http_client.maxConnectionsPerHost = maxConnections;
     _pub_client = PubClient(
         client: http.IOClient(_http_client), baseApiUrl: this.upstream);
   }

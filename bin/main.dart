@@ -11,6 +11,8 @@ ArgResults parseArgs(List<String> arguments) {
         abbr: 'u',
         help: 'the upstream to mirror from',
         defaultsTo: 'https://pub.dartlang.org/api')
+    ..addOption('connections',
+        abbr: 'c', help: 'max number of connections', defaultsTo: '10')
     ..addOption('concurrency',
         abbr: 'p',
         help: 'max number of packages to download in parallel',
@@ -18,6 +20,7 @@ ArgResults parseArgs(List<String> arguments) {
   var result = parser.parse(arguments);
   if (result['help'] ||
       int.tryParse(result['concurrency']) == null ||
+      int.tryParse(result['connections']) == null ||
       result.rest.length != 2) {
     print("""Usage:
 pub_mirror [options] <dest-path> <serving-url>
@@ -34,6 +37,7 @@ ${parser.usage}""");
 main(List<String> arguments) async {
   var args = parseArgs(arguments);
   await pub_mirror.PubMirrorTool(args['upstream'], args.rest[0], args.rest[1],
-          verbose: args['verbose'])
+          verbose: args['verbose'],
+          maxConnections: int.parse(args['connections']))
       .download(int.parse(args['concurrency']));
 }
