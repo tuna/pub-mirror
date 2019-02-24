@@ -3,6 +3,7 @@ import 'dart:convert' as convert;
 import 'package:path/path.dart' as path;
 import 'package:executor/executor.dart' as executor;
 import 'package:http/http.dart' as http;
+import 'package:pedantic/pedantic.dart' as pedantic;
 import 'package:pub_client/pub_client.dart';
 
 import './http.dart';
@@ -101,10 +102,10 @@ class PubMirrorTool {
   Future download(int concurrency) async {
     final exe = new executor.Executor(concurrency: concurrency);
     await for (var package in listAllPackages()) {
-      exe.scheduleTask(() async {
+      pedantic.unawaited(exe.scheduleTask(() async {
         print('Downloading ${package.name}');
         await downloadPackage(package.name);
-      });
+      }));
     }
     await exe.join();
   }
