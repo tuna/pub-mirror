@@ -1,11 +1,12 @@
-import "dart:io" as io;
-import "dart:convert" as convert;
-import "package:path/path.dart" as path;
+import 'dart:io' as io;
+import 'dart:convert' as convert;
+import 'package:path/path.dart' as path;
 import 'package:executor/executor.dart' as executor;
-import "package:pub_client/pub_client.dart";
+import 'package:http/http.dart' as http;
+import 'package:pub_client/pub_client.dart';
 
-import "./http.dart";
-import "./json.dart";
+import './http.dart';
+import './json.dart';
 
 class PubMirrorTool {
   final String upstream, destination, serving_url;
@@ -31,7 +32,7 @@ class PubMirrorTool {
       for (var package in package_page.packages) {
         yield package;
       }
-      if (package_page.next_url == null || package_page.next_url.trim() == "") {
+      if (package_page.next_url == null || package_page.next_url.trim() == '') {
         break;
       }
     }
@@ -78,9 +79,11 @@ class PubMirrorTool {
     await ensureDirectoryCreated(destination);
     final dirname = path.dirname(destination);
     final basename = path.basename(destination);
-    final tmp_file = path.join(dirname, '.${basename}.tmp');
+    final tmp_file_path = path.join(dirname, '.${basename}.tmp');
     final content = convert.json.encode(SerializeToJson(object));
-    await io.File(destination).writeAsString(content);
+    final tmp_file =
+        await io.File(tmp_file_path).writeAsString(content, flush: true);
+    await tmp_file.rename(destination);
   }
 
   Future saveArchiveFile(String url, String destination) async {
