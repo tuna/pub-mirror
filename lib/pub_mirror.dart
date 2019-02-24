@@ -1,5 +1,7 @@
 import "dart:io" as io;
+import "dart:convert" as convert;
 import "package:http/http.dart" as http;
+import "package:path/path.dart" as path;
 import "package:pub_client/pub_client.dart";
 
 import "./http.dart";
@@ -7,10 +9,17 @@ import "./json.dart";
 
 class PubMirrorTool {
   final String upstream, destination, serving_url;
+  final verbose;
   final _http_client = io.HttpClient();
+  final archive_extension = '.tar.gz';
+  final meta_filename = 'meta.json';
   PubClient _pub_client;
 
-  PubMirrorTool(this.upstream, this.destination, this.serving_url) {
+  String get api_path => path.join(destination, 'api');
+  String get archive_path => destination;
+
+  PubMirrorTool(this.upstream, this.destination, this.serving_url,
+      {this.verbose = true}) {
     _pub_client = PubClient(
         client: http.IOClient(_http_client), baseApiUrl: this.upstream);
   }
@@ -28,33 +37,56 @@ class PubMirrorTool {
   }
 
   Future downloadPackage(String name) async {
-    var full_package = await _pub_client.getPackage(name);
+    final full_package = await _pub_client.getPackage(name);
     // TODO: call
-    await savePackageInfo(full_package, '');
     for (var version in full_package.versions) {
-      print(
-          '--> Downloading ${name}@${version.version} from ${version.archive_url}');
-      await saveVersionInfo(version, '');
-      await saveArchiveFile(version.archive_url, '/dev/null');
+      if (verbose) {
+        print('--> Downloading ${name}@${version.version}');
+      }
+      final filename = path.basename(version.archive_url);
+      assert(filename.endsWith(archive_extension),
+          'Unexpected archive filename found: ${filename}');
+      await saveArchiveFile(
+          version.archive_url,
+          path.join(archive_path, 'packages', name, 'versions',
+              version.version + archive_extension));
+      await saveVersionInfo(
+          version,
+          path.join(api_path, 'packages', name, 'versions', version.version,
+              meta_filename));
     }
+    await savePackageInfo(
+        full_package, path.join(api_path, 'packages', name, meta_filename));
   }
 
-  Future savePackageInfo(FullPackage pkg, String path) async {
-    // TODO: meet the requirements at
-    // https://github.com/dart-lang/pub_server/blob/master/lib/shelf_pubserver.dart#L30-L49
-    //print('${pkg.url} ==> ${json.encode(SerializeToJson(pkg))}');
+  Future savePackageInfo(FullPackage pkg, String destination) async {
+    if (verbose) {
+      print('==> saving ${destination}');
+    }
+    await ensureDirectoryCreated(destination);
+    final content = convert.json.encode(SerializeToJson(pkg));
+    await io.File(destination).writeAsString(content);
   }
 
-  Future saveVersionInfo(Version ver, String path) async {
-    // TODO: meet the requirements at
-    // https://github.com/dart-lang/pub_server/blob/master/lib/shelf_pubserver.dart#L53-L65
-    //print('${ver.url} ==> ${json.encode(SerializeToJson(ver))}');
+  Future saveVersionInfo(Version ver, String destination) async {
+    if (verbose) {
+      print('==> saving ${destination}');
+    }
+    await ensureDirectoryCreated(destination);
+    final content = convert.json.encode(SerializeToJson(ver));
+    await io.File(destination).writeAsString(content);
   }
 
-  Future saveArchiveFile(String url, String path) async {
-    // TODO: meet the requirements at
-    // https://github.com/dart-lang/pub_server/blob/master/lib/shelf_pubserver.dart#L69-L75
-    await saveFileTo(url, path);
+  Future saveArchiveFile(String url, String destination) async {
+    if (verbose) {
+      print('==> saving ${destination}');
+    }
+    await ensureDirectoryCreated(destination);
+    await saveFileTo(url, destination, client: _http_client);
+  }
+
+  Future ensureDirectoryCreated(String file_path) async {
+    await io.Directory(path.dirname(file_path)).create(recursive: true);
   }
 
   Future download() async {
