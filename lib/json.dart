@@ -1,8 +1,6 @@
 import 'dart:mirrors' as mirrors;
 
-/*
- * Serialized as json, specialized for object in pub_mirror
- */
+/// Serialized as json, specialized for object in pub_mirror
 dynamic SerializeToJson(dynamic object) {
   var toJsonMethod =
       mirrors.reflect(object).type.instanceMembers[Symbol("toJson")];

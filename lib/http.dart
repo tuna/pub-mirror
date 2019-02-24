@@ -25,9 +25,7 @@ class StatusCodeException implements Exception {
   }
 }
 
-/*
- * download file progressively
- */
+/// download file progressively
 Future saveFileTo(String url, String path, {io.HttpClient client}) async {
   if (client == null) {
     client = io.HttpClient();
