@@ -43,5 +43,5 @@ Future saveFileTo(String url, String path, {io.HttpClient client}) async {
     );
   }
   // TODO: progress bar
-  response.pipe(io.File(path).openWrite());
+  await response.pipe(io.File(path).openWrite());
 }
