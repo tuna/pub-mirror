@@ -19,6 +19,40 @@ class PubMirrorTool {
 
   String get api_path => path.join(destination, 'api');
   String get archive_path => destination;
+  String get api_url => path.url.join(serving_url, 'api');
+  String get archive_url => serving_url;
+
+  /// path to save the meta data of all packages
+  String get full_page_path => path.join(api_path, 'packages', meta_filename);
+
+  /// path to save the meta data for the package
+  String package_meta_path(String package_name) =>
+      path.join(api_path, 'packages', package_name, meta_filename);
+
+  /// path to save the meta data for the version of the package
+  String version_meta_path(String package_name, String version) => path.join(
+      api_path, 'packages', package_name, 'versions', version, meta_filename);
+
+  /// path to save the archive file for the version of the package
+  String version_archive_path(String package_name, String version) => path.join(
+      archive_path,
+      'packages',
+      package_name,
+      'versions',
+      version + archive_extension);
+
+  /// url to get the meta data for the package
+  String package_api_url(String package_name) =>
+      path.url.join(api_url, 'packages', package_name);
+
+  /// url to get the meta data for the version of the package
+  String version_api_url(String package_name, String version) =>
+      path.url.join(api_url, 'packages', package_name, 'versions', version);
+
+  /// url to get the archive file for the version of the package
+  String version_archive_url(String package_name, String version) =>
+      path.url.join(archive_url, 'packages', package_name, 'versions',
+          version + archive_extension);
 
   PubMirrorTool(this.upstream, this.destination, this.serving_url,
       {this.verbose = true, maxConnections = 10}) {
@@ -39,15 +73,14 @@ class PubMirrorTool {
     }
   }
 
-  Future downloadPackage(String name, {bool overwrite: false}) async {
+  Future downloadPackage(String name,
+      {bool overwrite: false}) async {
     final full_package = await _pub_client.getPackage(name);
-    final package_api_path = path.join(api_path, 'packages', name);
     int new_versions_num = 0;
     for (var version in full_package.versions) {
-      final version_api_path =
-          path.join(package_api_path, 'versions', version.version);
-      final version_meta_path = path.join(version_api_path, meta_filename);
-      final version_meta_file = io.File(version_meta_path);
+      final current_version_meta_path =
+          version_meta_path(name, version.version);
+      final version_meta_file = io.File(current_version_meta_path);
       bool new_version = true;
       if (version_meta_file.existsSync() &&
           version_meta_file.statSync().type == io.FileSystemEntityType.file) {
@@ -60,24 +93,19 @@ class PubMirrorTool {
         assert(filename.endsWith(archive_extension),
             'Unexpected archive filename found: ${filename}');
         await saveArchiveFile(
-            version.archive_url,
-            path.join(archive_path, 'packages', name, 'versions',
-                version.version + archive_extension));
+            version.archive_url, version_archive_path(name, version.version));
       }
 
-      version.archive_url = path.url.join(serving_url, 'packages', name,
-          'versions', version.version + archive_extension);
+      version.archive_url = version_archive_url(name, version.version);
       if (version.version == full_package.latest.version) {
         full_package.latest.archive_url = version.archive_url;
       }
       if (new_version || overwrite) {
-        await dumpJsonSafely(
-            version, path.join(version_api_path, meta_filename));
+        await dumpJsonSafely(version, current_version_meta_path);
       }
     }
     if (new_versions_num > 0 || overwrite) {
-      await dumpJsonSafely(
-          full_package, path.join(package_api_path, meta_filename));
+      await dumpJsonSafely(full_package, package_meta_path(name));
     }
   }
 
@@ -89,7 +117,7 @@ class PubMirrorTool {
     final tmp_file_path = path.join(dirname, '.${basename}.tmp');
     final content = convert.json.encode(SerializeToJson(object));
     if (verbose) {
-      print('==> saving ${destination}:\n${content}');
+      print('==> saving ${destination}: ${content}');
     }
     final tmp_file =
         await io.File(tmp_file_path).writeAsString(content, flush: true);
@@ -108,14 +136,35 @@ class PubMirrorTool {
     await io.Directory(path.dirname(file_path)).create(recursive: true);
   }
 
+  void alterPackage(Package pkg) {
+    pkg.url = package_api_url(pkg.name);
+    pkg.version_url = version_api_url(pkg.name, '{version}');
+
+    pkg.latest.url = version_api_url(pkg.name, pkg.latest.version);
+    pkg.latest.archive_url = version_api_url(pkg.name, pkg.latest.version);
+    pkg.latest.package_url = pkg.url;
+
+    // no url to manage uploaders or upload new versions
+    pkg.uploaders_url = null;
+    pkg.new_version_url = null;
+  }
+
   Future download(int concurrency, {bool overwrite: false}) async {
-    final exe = new executor.Executor(concurrency: concurrency);
+    final exe = executor.Executor(concurrency: concurrency);
+    final full_page = Page(packages: <Package>[]);
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
         print('Downloading ${package.name}');
         await downloadPackage(package.name, overwrite: overwrite);
       }));
+
+      pedantic.unawaited(exe.scheduleTask(() async {
+        alterPackage(package);
+        full_page.packages.add(package);
+      }));
     }
     await exe.join();
+    print('Saving the index...');
+    await dumpJsonSafely(full_page, full_page_path);
   }
 }
