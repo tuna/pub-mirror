@@ -42,46 +42,55 @@ class PubMirrorTool {
   Future downloadPackage(String name) async {
     final full_package = await _pub_client.getPackage(name);
     final package_api_path = path.join(api_path, 'packages', name);
-    // TODO: call
+    int new_versions_num = 0;
     for (var version in full_package.versions) {
       final version_api_path =
           path.join(package_api_path, 'versions', version.version);
       final version_meta_path = path.join(version_api_path, meta_filename);
       final version_meta_file = io.File(version_meta_path);
+      bool new_version = true;
       if (version_meta_file.existsSync() &&
           version_meta_file.statSync().type == io.FileSystemEntityType.file) {
         print('--> Skip ${name}@${version.version}');
-        continue;
+        new_version = false;
+      } else {
+        print('--> Downloading ${name}@${version.version}');
+        new_versions_num++;
+        final filename = path.basename(version.archive_url);
+        assert(filename.endsWith(archive_extension),
+            'Unexpected archive filename found: ${filename}');
+        await saveArchiveFile(
+            version.archive_url,
+            path.join(archive_path, 'packages', name, 'versions',
+                version.version + archive_extension));
       }
-      print('--> Downloading ${name}@${version.version}');
-      final filename = path.basename(version.archive_url);
-      assert(filename.endsWith(archive_extension),
-          'Unexpected archive filename found: ${filename}');
-      await saveArchiveFile(
-          version.archive_url,
-          path.join(archive_path, 'packages', name, 'versions',
-              version.version + archive_extension));
+
       version.archive_url = path.url.join(serving_url, 'packages', name,
           'versions', version.version + archive_extension);
       if (version.version == full_package.latest.version) {
         full_package.latest.archive_url = version.archive_url;
       }
-      await dumpJsonSafely(version, path.join(version_api_path, meta_filename));
+      if (new_version) {
+        await dumpJsonSafely(
+            version, path.join(version_api_path, meta_filename));
+      }
     }
-    await dumpJsonSafely(
-        full_package, path.join(package_api_path, meta_filename));
+    if (new_versions_num > 0) {
+      await dumpJsonSafely(
+          full_package, path.join(package_api_path, meta_filename));
+    }
   }
 
   Future dumpJsonSafely(dynamic object, String destination) async {
-    if (verbose) {
-      print('==> saving ${destination}');
-    }
     // Assume that moving file in same directory is atomic
     await ensureDirectoryCreated(destination);
     final dirname = path.dirname(destination);
     final basename = path.basename(destination);
     final tmp_file_path = path.join(dirname, '.${basename}.tmp');
     final content = convert.json.encode(SerializeToJson(object));
+    if (verbose) {
+      print('==> saving ${destination}:\n${content}');
+    }
     final tmp_file =
         await io.File(tmp_file_path).writeAsString(content, flush: true);
     await tmp_file.rename(destination);
