@@ -39,7 +39,7 @@ class PubMirrorTool {
     }
   }
 
-  Future downloadPackage(String name) async {
+  Future downloadPackage(String name, {bool overwrite: false}) async {
     final full_package = await _pub_client.getPackage(name);
     final package_api_path = path.join(api_path, 'packages', name);
     int new_versions_num = 0;
@@ -70,12 +70,12 @@ class PubMirrorTool {
       if (version.version == full_package.latest.version) {
         full_package.latest.archive_url = version.archive_url;
       }
-      if (new_version) {
+      if (new_version || overwrite) {
         await dumpJsonSafely(
             version, path.join(version_api_path, meta_filename));
       }
     }
-    if (new_versions_num > 0) {
+    if (new_versions_num > 0 || overwrite) {
       await dumpJsonSafely(
           full_package, path.join(package_api_path, meta_filename));
     }
@@ -108,12 +108,12 @@ class PubMirrorTool {
     await io.Directory(path.dirname(file_path)).create(recursive: true);
   }
 
-  Future download(int concurrency) async {
+  Future download(int concurrency, {bool overwrite: false}) async {
     final exe = new executor.Executor(concurrency: concurrency);
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
         print('Downloading ${package.name}');
-        await downloadPackage(package.name);
+        await downloadPackage(package.name, overwrite: overwrite);
       }));
     }
     await exe.join();

@@ -7,6 +7,8 @@ ArgResults parseArgs(List<String> arguments) {
     ..addFlag('help', abbr: 'h', negatable: false, help: 'print usage and exit')
     ..addFlag('verbose',
         abbr: 'v', negatable: false, help: 'more verbose output')
+    ..addFlag('overwrite',
+        abbr: 'o', help: 'overwrite existing meta files')
     ..addOption('upstream',
         abbr: 'u',
         help: 'the upstream to mirror from',
@@ -39,5 +41,5 @@ main(List<String> arguments) async {
   await pub_mirror.PubMirrorTool(args['upstream'], args.rest[0], args.rest[1],
           verbose: args['verbose'],
           maxConnections: int.parse(args['connections']))
-      .download(int.parse(args['concurrency']));
+      .download(int.parse(args['concurrency']), overwrite: args['overwrite']);
 }
