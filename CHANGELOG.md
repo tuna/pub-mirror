@@ -1,3 +1,36 @@
-## 1.0.0
+## 0.1.0
 
-- Initial version, created by Stagehand
+- initial version with the basic functions
+
+## 0.1.1
+
+- saving meta.json to temp file and move it to the destination (not working)
+- fix some bugs
+
+## 0.1.2
+
+- add dependency on http
+- fix some bugs
+
+## 0.1.3
+
+- make the pub_mirror available as an executable
+- mark unwanted Futures
+
+## 0.1.5
+
+- make the comments dartdoc-friendly
+
+## 0.1.6
+
+- downgrade pedantic to 1.4.0
+
+## 0.1.7
+
+- published as a docker image
+- fix the bug that the meta.json of the package is incorrect when some versions of the package is skipped
+- new options to overwrite the meta.json even if it has existed.
+
+## 0.1.8
+
+- save meta.json for available packages

@@ -3,8 +3,8 @@ Pub Mirror
 
 [![Pub Package](https://img.shields.io/pub/v/pub_mirror.svg)](https://pub.dartlang.org/packages/pub_mirror)
 
-A multi-thread tool to download content of [Pub](http://pub.dartlang.org),
-and the result can be served by a http server and taken as the backend of
+A multi-thread tool to download content from [Pub](http://pub.dartlang.org).
+Then the result can be served by a http server and taken as the backend of
 [pub](https://github.com/dart-lang/pub), [flutter](https://github.com/flutter/flutter)
 or even Pub Mirror itself.
 
@@ -54,9 +54,9 @@ Options:
 ```
 
 The `dest-path` is where you would like to save the packages and `serving-url`
-is the base url that you would like to serving.
+is the base url that you would like to serving on.
 
-***file:///tmp/pub/ is just used as an example, the file scheme is not supported by pub***
+**file:///tmp/pub/ is just used as an example, the file scheme is not supported by pub.**
 
 The packages are downloaded incrementally, which means:
 1. If the process is interrupted and resumed, packages and versions has been downloaded will be skipped.
