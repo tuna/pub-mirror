@@ -7,9 +7,9 @@ main() async {
       maxConnections: 10);
 
   // iterate over all the packages
-  //await for (var package in tool.listAllPackages()) {
-    //print('-> ${package.name}');
-  //}
+  await for (var package in tool.listAllPackages()) {
+    print('-> ${package.name}');
+  }
 
   // download the single package
   await tool.downloadPackage('pub_mirror');
