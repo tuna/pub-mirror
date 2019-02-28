@@ -22,6 +22,12 @@ It can be installed from pub by:
 $ pub global activate pub_mirror
 ```
 
+or installed as a docker image by:
+
+```bash
+$ docker pull huiyiqun/pub_mirror
+```
+
 or installed from source directly by:
 
 ```bash
