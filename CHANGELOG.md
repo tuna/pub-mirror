@@ -34,3 +34,9 @@
 ## 0.1.8
 
 - save meta.json for available packages
+
+## 0.1.9
+
+- add documentations
+- add examples
+- upstream become an optional argument of PubMirrorTool
