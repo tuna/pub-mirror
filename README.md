@@ -2,6 +2,8 @@ Pub Mirror
 ==========
 
 [![Pub Package](https://img.shields.io/pub/v/pub_mirror.svg)](https://pub.dartlang.org/packages/pub_mirror)
+[![Docker Image](https://img.shields.io/docker/pulls/huiyiqun/pub_mirror.svg)](https://hub.docker.com/r/huiyiqun/pub_mirror)
+
 
 A multi-thread tool to download content from [Pub](http://pub.dartlang.org).
 Then the result can be served by a http server and taken as the backend of
