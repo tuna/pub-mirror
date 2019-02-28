@@ -54,8 +54,10 @@ class PubMirrorTool {
       path.url.join(archive_url, 'packages', package_name, 'versions',
           version + archive_extension);
 
-  PubMirrorTool(this.upstream, this.destination, this.serving_url,
-      {this.verbose = true, maxConnections = 10}) {
+  PubMirrorTool(this.destination, this.serving_url,
+      {this.upstream = 'https://pub.dartlang.org/api',
+      this.verbose = true,
+      maxConnections = 10}) {
     _http_client.maxConnectionsPerHost = maxConnections;
     _pub_client = PubClient(
         client: http.IOClient(_http_client), baseApiUrl: this.upstream);
@@ -73,8 +75,7 @@ class PubMirrorTool {
     }
   }
 
-  Future downloadPackage(String name,
-      {bool overwrite: false}) async {
+  Future downloadPackage(String name, {bool overwrite: false}) async {
     final full_package = await _pub_client.getPackage(name);
     int new_versions_num = 0;
     for (var version in full_package.versions) {
