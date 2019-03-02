@@ -8,6 +8,7 @@ import 'package:pub_client/pub_client.dart';
 
 import './http.dart';
 import './json.dart';
+import './logging.dart';
 
 class PubMirrorTool {
   final String upstream, destination, serving_url;
@@ -85,10 +86,10 @@ class PubMirrorTool {
       bool new_version = true;
       if (version_meta_file.existsSync() &&
           version_meta_file.statSync().type == io.FileSystemEntityType.file) {
-        print('--> Skip ${name}@${version.version}');
+        logger.info('--> Skip ${name}@${version.version}');
         new_version = false;
       } else {
-        print('--> Downloading ${name}@${version.version}');
+        logger.info('--> Downloading ${name}@${version.version}');
         new_versions_num++;
         final filename = path.basename(version.archive_url);
         assert(filename.endsWith(archive_extension),
@@ -117,18 +118,14 @@ class PubMirrorTool {
     final basename = path.basename(destination);
     final tmp_file_path = path.join(dirname, '.${basename}.tmp');
     final content = convert.json.encode(SerializeToJson(object));
-    if (verbose) {
-      print('==> saving ${destination}: ${content}');
-    }
+    logger.fine('==> saving ${destination}: ${content}');
     final tmp_file =
         await io.File(tmp_file_path).writeAsString(content, flush: true);
     await tmp_file.rename(destination);
   }
 
   Future saveArchiveFile(String url, String destination) async {
-    if (verbose) {
-      print('==> saving ${destination}');
-    }
+    logger.fine('==> saving ${destination}');
     await ensureDirectoryCreated(destination);
     await saveFileTo(url, destination, client: _http_client);
   }
@@ -155,7 +152,7 @@ class PubMirrorTool {
     final full_page = Page(packages: <Package>[]);
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
-        print('Downloading ${package.name}');
+        logger.info('Downloading ${package.name}');
         await downloadPackage(package.name, overwrite: overwrite);
       }));
 
@@ -165,7 +162,7 @@ class PubMirrorTool {
       }));
     }
     await exe.join();
-    print('Saving the index...');
+    logger.info('Saving the index...');
     await dumpJsonSafely(full_page, full_page_path);
   }
 }

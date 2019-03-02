@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:pub_mirror/logging.dart';
 import 'package:pub_mirror/pub_mirror.dart' as pub_mirror;
 import 'package:args/args.dart';
 
@@ -37,6 +38,7 @@ ${parser.usage}""");
 
 main(List<String> arguments) async {
   var args = parseArgs(arguments);
+  initializeLogger(verbose: args['verbose']);
   await pub_mirror.PubMirrorTool(args.rest[0], args.rest[1],
           upstream: args['upstream'],
           verbose: args['verbose'],
