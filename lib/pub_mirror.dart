@@ -76,7 +76,7 @@ class PubMirrorTool {
     }
   }
 
-  Future downloadPackage(String name, {bool overwrite: false}) async {
+  Future downloadPackage(String name, {bool overwrite = false}) async {
     final full_package = await _pub_client.getPackage(name);
     int new_versions_num = 0;
     for (var version in full_package.versions) {
@@ -147,7 +147,7 @@ class PubMirrorTool {
     pkg.new_version_url = null;
   }
 
-  Future download(int concurrency, {bool overwrite: false}) async {
+  Future download(int concurrency, {bool overwrite = false}) async {
     final exe = executor.Executor(concurrency: concurrency);
     final full_page = Page(packages: <Package>[]);
     await for (var package in listAllPackages()) {
