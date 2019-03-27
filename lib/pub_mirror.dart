@@ -150,6 +150,11 @@ class PubMirrorTool {
   Future download(int concurrency, {bool overwrite = false}) async {
     final exe = executor.Executor(concurrency: concurrency);
     final full_page = Page(packages: <Package>[]);
+
+    final status_printer = Stream.periodic(Duration(seconds: 3)).listen((_) {
+      logger.info('Executor: ${exe.runningCount} - ${exe.waitingCount}');
+    });
+
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
         logger.info('Downloading ${package.name}');
@@ -161,8 +166,12 @@ class PubMirrorTool {
         full_page.packages.add(package);
       }));
     }
-    await exe.join();
+    logger.info('All tasks have been scheduled...');
+    await exe.join(withWaiting: true);
+    logger.info('Stopping the status printer...');
+    await status_printer.cancel();
     logger.info('Saving the index...');
     await dumpJsonSafely(full_page, full_page_path);
+    logger.info('Done.');
   }
 }
