@@ -40,3 +40,15 @@
 - add documentations
 - add examples
 - upstream become an optional argument of PubMirrorTool
+
+## 1.0.0
+
+- install all the dependencies from pub
+
+## 1.0.1
+
+- improve the code
+
+## 1.0.2
+
+- print the status of the executor during downloading
