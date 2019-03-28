@@ -52,3 +52,7 @@
 ## 1.0.2
 
 - print the status of the executor during downloading
+
+## 1.0.3
+
+- display the progress of downloading
