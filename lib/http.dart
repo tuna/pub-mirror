@@ -63,7 +63,7 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
     logger.info('[${url} ===> ${destination}] ${(100 * downloaded_length / response.contentLength).toStringAsFixed(2)}% Total: ${getSize(response.contentLength)} Downloaded: ${getSize(downloaded_length)} Speed: ${getSize(downloaded_length/seconds)}/s');
   });
   try {
-    await for (var block in response) {
+    await for (var block in response.timeout(Duration(seconds: 10))) {
       io_sink.add(block);
       downloaded_length += block.length;
     }
