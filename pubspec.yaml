@@ -1,6 +1,6 @@
 name: pub_mirror
 description: A multi-thread tool to download content from Pub. Then the result can be served by a http server and taken as the backend of pub, flutter or even Pub Mirror itself.
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/huiyiqun/pub-mirror
 author: Hui Yiqun <i@huiyiqun.me>
 
