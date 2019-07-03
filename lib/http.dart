@@ -44,9 +44,12 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
   if (client == null) {
     client = io.HttpClient();
   }
-  var request = await client.getUrl(Uri.parse(url));
-  var response = await request.close();
+  var request = await client.getUrl(Uri.parse(url)).timeout(Duration(seconds: 10));
+  logger.fine("Connection has been established: ${url}");
+  var response = await request.close().timeout(Duration(seconds: 10));
+  logger.fine("Response has been received: ${url}");
   if (response.statusCode >= 400) {
+    logger.fine("Non-2xx status code: ${url}");
     await response.drain();
     throw StatusCodeException(
       reason: response.reasonPhrase,
