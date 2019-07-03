@@ -56,3 +56,12 @@
 ## 1.0.3
 
 - display the progress of downloading
+
+## 1.0.4
+
+- exit from death connection
+
+## 1.0.5
+
+- more log
+- timeout for http connection
