@@ -65,3 +65,7 @@
 
 - more log
 - timeout for http connection
+
+## 1.0.6
+
+- more log
