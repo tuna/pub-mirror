@@ -70,8 +70,13 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
       io_sink.add(block);
       downloaded_length += block.length;
     }
+  } catch (e) {
+    print('Unhandled exception during downloading: $e');
+    rethrow;
   } finally {
     await io_sink.close();
     await progress_printer.cancel();
   }
+  assert(downloaded_length == response.contentLength);
+  logger.info('[${url} ===> ${destination}] ${getSize(downloaded_length)} saved.');
 }
