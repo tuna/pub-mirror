@@ -69,3 +69,8 @@
 ## 1.0.6
 
 - more log
+
+## 1.0.7
+
+- avoid writing files during reading HTTP response
+- re-try HTTP connecting
