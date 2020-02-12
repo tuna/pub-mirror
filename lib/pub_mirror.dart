@@ -157,7 +157,7 @@ class PubMirrorTool {
 
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
-        logger.info('Downloading ${package.name}');
+        logger.info('Syncing ${package.name}');
         await downloadPackage(package.name, overwrite: overwrite);
       }));
 
