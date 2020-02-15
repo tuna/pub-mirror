@@ -1,5 +1,7 @@
 import 'dart:io' as io;
 import 'dart:convert' as convert;
+import 'dart:async' as async;
+import 'package:retry/retry.dart' as retry;
 import 'package:path/path.dart' as path;
 import 'package:executor/executor.dart' as executor;
 import 'package:http/http.dart' as http;
@@ -66,7 +68,10 @@ class PubMirrorTool {
 
   Stream<Package> listAllPackages() async* {
     for (var i = 1;; i++) {
-      Page package_page = await _pub_client.getPageOfPackages(i);
+      Page package_page = await retry.RetryOptions(maxAttempts: 3).retry(() async {
+        logger.fine('Getting package page $i');
+        return await _pub_client.getPageOfPackages(i).timeout(Duration(seconds: 5));
+      }, retryIf: (e) => e is async.TimeoutException);
       for (var package in package_page.packages) {
         yield package;
       }
@@ -77,7 +82,10 @@ class PubMirrorTool {
   }
 
   Future downloadPackage(String name, {bool overwrite = false}) async {
-    final full_package = await _pub_client.getPackage(name);
+    final full_package = await retry.RetryOptions(maxAttempts: 3).retry(() async {
+      logger.fine('Getting details of package $name');
+      return await _pub_client.getPackage(name).timeout(Duration(seconds: 5));
+    }, retryIf: (e) => e is async.TimeoutException);
     int new_versions_num = 0;
     for (var version in full_package.versions) {
       final current_version_meta_path =
