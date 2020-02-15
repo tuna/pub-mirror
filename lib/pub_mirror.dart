@@ -4,7 +4,6 @@ import 'dart:async' as async;
 import 'package:retry/retry.dart' as retry;
 import 'package:path/path.dart' as path;
 import 'package:executor/executor.dart' as executor;
-import 'package:http/http.dart' as http;
 import 'package:pedantic/pedantic.dart' as pedantic;
 import 'package:pub_client/pub_client.dart';
 
@@ -18,7 +17,6 @@ class PubMirrorTool {
   final _http_client = io.HttpClient();
   final archive_extension = '.tar.gz';
   final meta_filename = 'meta.json';
-  PubClient _pub_client;
 
   String get api_path => path.join(destination, 'api');
   String get archive_path => destination;
@@ -62,15 +60,17 @@ class PubMirrorTool {
       this.verbose = true,
       maxConnections = 10}) {
     _http_client.maxConnectionsPerHost = maxConnections;
-    _pub_client = PubClient(
-        client: http.IOClient(_http_client), baseApiUrl: this.upstream);
   }
 
   Stream<Package> listAllPackages() async* {
+    final pub_client = PubClient(client: null, baseApiUrl: this.upstream);
     for (var i = 1;; i++) {
-      Page package_page = await retry.RetryOptions(maxAttempts: 3).retry(() async {
+      Page package_page =
+          await retry.RetryOptions(maxAttempts: 3).retry(() async {
         logger.fine('Getting package page $i');
-        return await _pub_client.getPageOfPackages(i).timeout(Duration(seconds: 5));
+        return await pub_client
+            .getPageOfPackages(i)
+            .timeout(Duration(seconds: 5));
       }, retryIf: (e) => e is async.TimeoutException);
       for (var package in package_page.packages) {
         yield package;
@@ -82,9 +82,11 @@ class PubMirrorTool {
   }
 
   Future downloadPackage(String name, {bool overwrite = false}) async {
-    final full_package = await retry.RetryOptions(maxAttempts: 3).retry(() async {
+    final full_package =
+        await retry.RetryOptions(maxAttempts: 3).retry(() async {
       logger.fine('Getting details of package $name');
-      return await _pub_client.getPackage(name).timeout(Duration(seconds: 5));
+      final pub_client = PubClient(client: null, baseApiUrl: this.upstream);
+      return await pub_client.getPackage(name).timeout(Duration(seconds: 5));
     }, retryIf: (e) => e is async.TimeoutException);
     int new_versions_num = 0;
     for (var version in full_package.versions) {
