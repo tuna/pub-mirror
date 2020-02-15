@@ -44,4 +44,5 @@ main(List<String> arguments) async {
           verbose: args['verbose'],
           maxConnections: int.parse(args['connections']))
       .download(int.parse(args['concurrency']), overwrite: args['overwrite']);
+  exit(0);
 }
