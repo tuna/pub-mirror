@@ -34,6 +34,10 @@ class PubMirrorTool {
   String version_meta_path(String package_name, String version) => path.join(
       api_path, 'packages', package_name, 'versions', version, meta_filename);
 
+  /// path to the folder for storing versions of the package
+  String version_folder_path(String package_name) =>
+      path.join(api_path, 'packages', package_name, 'versions');
+
   /// path to save the archive file for the version of the package
   String version_archive_path(String package_name, String version) => path.join(
       archive_path,
@@ -81,7 +85,8 @@ class PubMirrorTool {
     }
   }
 
-  Future downloadPackage(String name, {bool overwrite = false}) async {
+  Future downloadPackage(String name,
+      {bool overwrite = false, bool delete_old = false}) async {
     final full_package =
         await retry.RetryOptions(maxAttempts: 3).retry(() async {
       logger.fine('Getting details of package $name');
@@ -117,7 +122,32 @@ class PubMirrorTool {
       }
     }
     if (new_versions_num > 0 || overwrite) {
+      logger.info('--> ${new_versions_num} new versions of ${name} found');
       await dumpJsonSafely(full_package, package_meta_path(name));
+    }
+    if (delete_old) {
+      logger.fine('Checking old versions of package $name');
+      var old_versions_num = 0;
+      var version_names = Set<String>();
+      var ver_folder = io.Directory(version_folder_path(name));
+      for (var v in full_package.versions) {
+        version_names.add(v.version);
+      }
+      await for (var item in ver_folder.list()) {
+        var version = path.basename(item.path);
+        if (!version_names.contains(version)) {
+          logger.info('--> Deleting ${name}@${version}');
+          old_versions_num++;
+          pedantic.unawaited(item.delete(recursive: true));
+          var archive_file = io.File(version_archive_path(name, version));
+          pedantic.unawaited(archive_file.exists().then((is_there) async {
+            if (is_there) await archive_file.delete();
+          }));
+        }
+      }
+      if (old_versions_num > 0) {
+        logger.info('--> ${old_versions_num} old versions of ${name} deleted');
+      }
     }
   }
 
@@ -157,7 +187,7 @@ class PubMirrorTool {
     pkg.new_version_url = null;
   }
 
-  Future download(int concurrency, {bool overwrite = false}) async {
+  Future download(int concurrency, {bool overwrite = false, bool delete_old = false}) async {
     final exe = executor.Executor(concurrency: concurrency);
     final full_page = Page(packages: <Package>[]);
 
@@ -168,7 +198,7 @@ class PubMirrorTool {
     await for (var package in listAllPackages()) {
       pedantic.unawaited(exe.scheduleTask(() async {
         logger.info('Syncing ${package.name}');
-        await downloadPackage(package.name, overwrite: overwrite);
+        await downloadPackage(package.name, overwrite: overwrite, delete_old: delete_old);
       }));
 
       pedantic.unawaited(exe.scheduleTask(() async {
