@@ -36,7 +36,7 @@ ${parser.usage}""");
   return result;
 }
 
-main(List<String> arguments) async {
+void main(List<String> arguments) async {
   var args = parseArgs(arguments);
   initializeLogger(verbose: args['verbose']);
   await pub_mirror.PubMirrorTool(args.rest[0], args.rest[1],
