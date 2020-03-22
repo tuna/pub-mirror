@@ -9,6 +9,7 @@ ArgResults parseArgs(List<String> arguments) {
     ..addFlag('verbose',
         abbr: 'v', negatable: false, help: 'more verbose output')
     ..addFlag('overwrite', abbr: 'o', help: 'overwrite existing meta files')
+    ..addFlag('delete', help: 'delete old versions of packages')
     ..addOption('upstream',
         abbr: 'u',
         help: 'the upstream to mirror from',
@@ -43,6 +44,7 @@ void main(List<String> arguments) async {
           upstream: args['upstream'],
           verbose: args['verbose'],
           maxConnections: int.parse(args['connections']))
-      .download(int.parse(args['concurrency']), overwrite: args['overwrite']);
+      .download(int.parse(args['concurrency']),
+          overwrite: args['overwrite'], delete_old: args['delete']);
   exit(0);
 }
