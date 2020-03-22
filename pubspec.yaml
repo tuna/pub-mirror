@@ -18,8 +18,5 @@ dependencies:
   logging: ^0.11.3+2
   retry: ^3.0.0+1
 
-dev_dependencies:
-  pedantic: ^1.4.0
-
 executables:
   pub_mirror:

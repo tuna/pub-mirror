@@ -43,9 +43,7 @@ String getSize(num byte) {
 
 /// download file progressively
 Future saveFileTo(String url, String destination, {io.HttpClient client}) async {
-  if (client == null) {
-    client = io.HttpClient();
-  }
+  client ??= io.HttpClient();
 
   io.HttpClientResponse response = await retry.RetryOptions(maxAttempts: 3).retry(() async {
     logger.fine("Connecting to ${url}");
@@ -74,8 +72,9 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
     logger.info('[${url} ===> ${destination}] ${(100 * downloaded_length / response.contentLength).toStringAsFixed(2)}% Total: ${getSize(response.contentLength)} Downloaded: ${getSize(downloaded_length)} Speed: ${getSize(downloaded_length/seconds)}/s');
   });
   try {
-    await for(var chunk in response.timeout(Duration(seconds: 10)))
+    await for(var chunk in response.timeout(Duration(seconds: 10))) {
       buffer.addAll(chunk);
+    }
   } catch (e) {
     print('Unhandled exception during downloading: $e');
     rethrow;

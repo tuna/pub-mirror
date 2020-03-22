@@ -1,6 +1,6 @@
 import 'package:pub_mirror/pub_mirror.dart' as pub_mirror;
 
-main() async {
+void main() async {
   final tool = pub_mirror.PubMirrorTool('/tmp/pub/', 'http://example.com/pub/',
       upstream: 'https://pub.dartlang.org/api',
       verbose: true,
