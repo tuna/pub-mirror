@@ -74,3 +74,7 @@
 
 - avoid writing files during reading HTTP response
 - re-try HTTP connecting
+
+## 1.0.8
+
+- use plain List instead of StreamBuffer

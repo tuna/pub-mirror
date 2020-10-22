@@ -1,7 +1,6 @@
 import 'dart:io' as io;
 import 'dart:math' as math;
 import 'dart:async' as async;
-import 'package:quiver/async.dart' as quiver_async;
 import 'package:retry/retry.dart' as retry;
 
 import './logging.dart';
@@ -51,10 +50,10 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
   io.HttpClientResponse response = await retry.RetryOptions(maxAttempts: 3).retry(() async {
     logger.fine("Connecting to ${url}");
     final request = await client.getUrl(Uri.parse(url)).timeout(Duration(seconds: 10));
-    logger.fine("Connection has been established: ${url}");
+    logger.fine("Connection established: ${url} (${request.connectionInfo.remoteAddress})");
     return await request.close().timeout(Duration(seconds: 10));
   }, retryIf: (e) => e is async.TimeoutException);
-  logger.fine("Response has been received: ${url}");
+  logger.fine("Response received: ${url}");
 
   if (response.statusCode >= 400) {
     logger.fine("Non-2xx status code: ${url}");
@@ -68,27 +67,27 @@ Future saveFileTo(String url, String destination, {io.HttpClient client}) async 
 
   // save response to buffer
   final watch = Stopwatch()..start();
-  final buffer = quiver_async.StreamBuffer<int>();
+  final List<int> buffer = [];
   final progress_printer = Stream.periodic(Duration(seconds: 1)).listen((_) {
     final seconds = watch.elapsed.inSeconds;
-    final downloaded_length = buffer.buffered;
+    final downloaded_length = buffer.length;
     logger.info('[${url} ===> ${destination}] ${(100 * downloaded_length / response.contentLength).toStringAsFixed(2)}% Total: ${getSize(response.contentLength)} Downloaded: ${getSize(downloaded_length)} Speed: ${getSize(downloaded_length/seconds)}/s');
   });
   try {
-    await buffer.addStream(response.timeout(Duration(seconds: 10)));
-    await buffer.close();
+    await for(var chunk in response.timeout(Duration(seconds: 10)))
+      buffer.addAll(chunk);
   } catch (e) {
     print('Unhandled exception during downloading: $e');
     rethrow;
   } finally {
     await progress_printer.cancel();
   }
-  assert(buffer.buffered == response.contentLength);
+  assert(buffer.length == response.contentLength);
 
   // save content in buffer to file
   final io_sink = io.File(destination).openWrite();
-  io_sink.add(await buffer.read(buffer.buffered));
+  io_sink.add(buffer);
   await io_sink.close();
 
-  logger.info('[${url} ===> ${destination}] ${getSize(response.contentLength)}(${getSize(response.contentLength/watch.elapsed.inSeconds)}/s) saved.');
+  logger.info('[${url} ===> ${destination}] ${getSize(response.contentLength)}(${getSize(response.contentLength*1000/watch.elapsed.inMilliseconds)}/s) saved.');
 }
